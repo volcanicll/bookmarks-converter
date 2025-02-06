@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>书签转换器</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      font-family: "Microsoft YaHei", Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+    }
+
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #bookmarkFile {
+      display: block;
+      margin: 10px auto;
+      padding: 10px;
+      border: 1px solid #5cb85c;
+      border-radius: 5px;
+      width: 80%;
+      max-width: 500px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+
+    #bookmarkFile:focus {
+      border-color: #4cae4c;
+      outline: none;
+    }
+
+    button {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
+      background-color: #5cb85c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s;
+      width: 80%;
+      max-width: 500px;
+    }
+
+    button:hover {
+      background-color: #4cae4c;
+    }
+
+    #output {
+      position: relative;
+      background-color: white;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      width: 80%;
+      height: 60%;
+      overflow-y: auto;
+      margin-top: 20px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    #copyButton {
+      position: absolute;
+      top: 0px;
+      right: 2px;
+      border: none;
+      cursor: pointer;
+      font-size: 20px;
+      color: white;
+      border-radius: 5px;
+      padding: 5px;
+      display: none;
+    }
+
+    #output:hover #copyButton {
+      display: block;
+    }
+  </style>
+
+  <body>
+    <h1>书签转换器</h1>
+    <input
+      type="file"
+      id="bookmarkFile"
+      placeholder="选择书签文件"
+      accept=".html"
+    />
+    <button onclick="convertBookmarks()">转换书签</button>
+
+    <pre id="output">
+      <span id="copyButton" onclick="copyToClipboard()" title="复制 JSON">📋</span>
+    </pre>
+
+    <script>
+      function formatDate(timestamp) {
+        if (!timestamp) return null;
+        try {
+          const date = new Date(parseInt(timestamp) * 1000);
+          return date.toISOString().split("T")[0]; // 简洁的 YYYY-MM-DD 格式化
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function parseBookmarks(doc) {
+        function parseDL(dlElement) {
+          const items = [];
+          if (!dlElement) return items;
+
+          const dtElements = Array.from(dlElement.children).filter(
+            (child) => child.tagName === "DT"
+          );
+
+          for (const dt of dtElements) {
+            const h3Tag = dt.querySelector("h3");
+            const aTag = dt.querySelector("a");
+
+            if (h3Tag) {
+              const folder = {
+                title: h3Tag.textContent.trim(),
+                type: "folder",
+                add_date: formatDate(h3Tag.getAttribute("ADD_DATE")),
+                children: [],
+              };
+              const nextDL = dt.querySelector("dl");
+              if (nextDL) {
+                folder.children = parseDL(nextDL);
+              }
+              items.push(folder);
+            } else if (aTag) {
+              const bookmark = {
+                title: aTag.textContent.trim(),
+                url: aTag.href || "",
+                type: "bookmark",
+                add_date: formatDate(aTag.getAttribute("ADD_DATE")),
+                icon: aTag.getAttribute("ICON") || "",
+              };
+              items.push(bookmark);
+            }
+          }
+          return items;
+        }
+        // 兼容各种情况, 找到顶层DL
+        let topDL = doc.body.querySelector("dl");
+        if (!topDL) {
+          topDL = doc.body.querySelector("h1 + dl"); // 兼容Safari
+          if (!topDL) {
+            const dt = doc.body.querySelector("dt");
+            if (dt) {
+              topDL = dt.querySelector("dl");
+            }
+          }
+        }
+
+        if (!topDL) {
+          console.error("Error: Could not find top-level <DL> tag.");
+          return []; // 或抛出异常
+        }
+        return parseDL(topDL);
+      }
+
+      function convertBookmarks() {
+        const fileInput = document.getElementById("bookmarkFile");
+        const outputArea = document.getElementById("output");
+        outputArea.textContent = ""; // 清空输出区域
+
+        const file = fileInput.files[0];
+        if (!file) {
+          alert("Please select a bookmarks HTML file.");
+          return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function (event) {
+          const htmlContent = event.target.result;
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(htmlContent, "text/html");
+
+          const result = parseBookmarks(doc);
+          outputArea.textContent = JSON.stringify(result, null, 4);
+        };
+
+        reader.onerror = function () {
+          outputArea.textContent = "Error: Could not read the file.";
+        };
+
+        reader.readAsText(file);
+      }
+
+      function copyToClipboard() {
+        const outputArea = document.getElementById("output");
+        const jsonText = outputArea.textContent;
+
+        if (!jsonText) {
+          alert("没有可复制的内容。");
+          return;
+        }
+
+        navigator.clipboard
+          .writeText(jsonText)
+          .then(() => {
+            alert("JSON 已复制到剪贴板！");
+          })
+          .catch((err) => {
+            console.error("复制失败:", err);
+          });
+      }
+    </script>
+  </body>
+</html>
