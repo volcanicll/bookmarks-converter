@@ -2,7 +2,6 @@
 <html>
   <head>
     <title>书签转换器</title>
-    <link rel="stylesheet" href="style.css" />
   </head>
 
   <style>
@@ -13,9 +12,8 @@
     }
 
     body {
-      font-family: "Microsoft YaHei", Arial, sans-serif;
-      background-color: #f4f4f4;
-      padding: 20px;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f9fa;
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
@@ -23,99 +21,256 @@
     }
 
     h1 {
-      color: #333;
+      color: #007bff;
       text-align: center;
+      margin-bottom: 30px;
+      font-size: 2.5rem;
+    }
+
+    .control-box {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      width: 80%;
+      max-width: 500px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+
+    .file-input-container {
       margin-bottom: 20px;
+      position: relative;
+    }
+
+    .file-input-label {
+      display: block;
+      padding: 12px;
+      background-color: #f8f9fa;
+      border: 2px dashed #007bff;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .file-input-label:hover {
+      background-color: #e9ecef;
+      border-color: #0056b3;
+    }
+
+    .file-input-label.drag-over {
+      background-color: #e3f2fd;
+      border-color: #0056b3;
     }
 
     #bookmarkFile {
-      display: block;
-      margin: 10px auto;
-      padding: 10px;
-      border: 1px solid #5cb85c;
-      border-radius: 5px;
-      width: 80%;
-      max-width: 500px;
-      font-size: 16px;
-      transition: border-color 0.3s;
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
     }
 
-    #bookmarkFile:focus {
-      border-color: #4cae4c;
-      outline: none;
+    .file-name {
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: #6c757d;
+      word-break: break-all;
+    }
+
+    .file-hint {
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: #6c757d;
+      text-align: center;
+    }
+
+    .file-error {
+      color: #dc3545;
+      font-size: 0.85rem;
+      margin-top: 8px;
+      display: none;
     }
 
     button {
       display: block;
-      margin: 10px auto;
-      padding: 10px 20px;
-      background-color: #5cb85c;
+      width: 100%;
+      padding: 12px 24px;
+      background-color: #007bff;
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
       cursor: pointer;
-      font-size: 16px;
-      transition: background-color 0.3s;
-      width: 80%;
-      max-width: 500px;
+      font-size: 1rem;
+      transition: background-color 0.3s, transform 0.2s;
     }
 
     button:hover {
-      background-color: #4cae4c;
+      background-color: #0056b3;
+      transform: translateY(-2px);
+    }
+
+    button:disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
+      transform: none;
     }
 
     #output {
       position: relative;
       background-color: white;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      padding: 10px;
+      border: 1px solid #ced4da;
+      border-radius: 8px;
+      padding: 15px;
       width: 80%;
       height: 60%;
       overflow-y: auto;
-      margin-top: 20px;
       white-space: pre-wrap;
       word-wrap: break-word;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     #copyButton {
       position: absolute;
-      top: 0px;
-      right: 2px;
+      top: 5px;
+      right: 5px;
       border: none;
       cursor: pointer;
-      font-size: 20px;
-      color: white;
+      font-size: 18px;
+      color: #007bff;
+      background-color: transparent;
       border-radius: 5px;
       padding: 5px;
       display: none;
+      transition: opacity 0.3s;
+      opacity: 0;
     }
 
     #output:hover #copyButton {
       display: block;
+      opacity: 1;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .control-box,
+      #output {
+        width: 95%;
+        max-width: none;
+      }
     }
   </style>
 
   <body>
     <h1>书签转换器</h1>
-    <input
-      type="file"
-      id="bookmarkFile"
-      placeholder="选择书签文件"
-      accept=".html"
-    />
-    <button onclick="convertBookmarks()">转换书签</button>
+    <div class="control-box">
+      <div class="file-input-container">
+        <label class="file-input-label" for="bookmarkFile" id="fileInputLabel">
+          <span>点击或拖拽上传书签文件</span>
+          <div class="file-name" id="fileName"></div>
+        </label>
+        <input type="file" id="bookmarkFile" accept=".html" />
+        <div class="file-hint">支持的文件格式：HTML 书签文件</div>
+        <div class="file-error" id="fileError">请选择正确的HTML书签文件</div>
+      </div>
+      <button onclick="convertBookmarks()" id="convertButton" disabled>
+        转换书签
+      </button>
+    </div>
 
     <pre id="output">
       <span id="copyButton" onclick="copyToClipboard()" title="复制 JSON">📋</span>
     </pre>
 
     <script>
+      const fileInput = document.getElementById("bookmarkFile");
+      const fileName = document.getElementById("fileName");
+      const fileError = document.getElementById("fileError");
+      const convertButton = document.getElementById("convertButton");
+      const fileInputLabel = document.getElementById("fileInputLabel");
+
+      // 文件拖拽处理
+      fileInputLabel.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        fileInputLabel.classList.add("drag-over");
+      });
+
+      fileInputLabel.addEventListener("dragleave", () => {
+        fileInputLabel.classList.remove("drag-over");
+      });
+
+      fileInputLabel.addEventListener("drop", (e) => {
+        e.preventDefault();
+        fileInputLabel.classList.remove("drag-over");
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          fileInput.files = files;
+          handleFileSelect();
+        }
+      });
+
+      // 文件选择处理
+      fileInput.addEventListener("change", handleFileSelect);
+
+      function handleFileSelect() {
+        const file = fileInput.files[0];
+        if (file) {
+          fileName.textContent = file.name;
+
+          if (!file.name.toLowerCase().endsWith(".html")) {
+            showError("请选择HTML格式的书签文件");
+            return;
+          }
+
+          // 验证文件内容
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const content = e.target.result;
+            if (!content.includes("<DL") && !content.includes("<dl")) {
+              showError("文件内容不是有效的书签格式");
+              return;
+            }
+
+            // 验证通过
+            hideError();
+            convertButton.disabled = false;
+          };
+          reader.onerror = function () {
+            showError("文件读取失败");
+          };
+          reader.readAsText(file);
+        } else {
+          fileName.textContent = "";
+          hideError();
+          convertButton.disabled = true;
+        }
+      }
+
+      function showError(message) {
+        fileError.textContent = message;
+        fileError.style.display = "block";
+        convertButton.disabled = true;
+      }
+
+      function hideError() {
+        fileError.style.display = "none";
+      }
+
       function formatDate(timestamp) {
         if (!timestamp) return null;
         try {
           const date = new Date(parseInt(timestamp) * 1000);
-          return date.toISOString().split("T")[0]; // 简洁的 YYYY-MM-DD 格式化
+          return date.toISOString().split("T")[0];
         } catch (error) {
           return null;
         }
@@ -159,10 +314,10 @@
           }
           return items;
         }
-        // 兼容各种情况, 找到顶层DL
+
         let topDL = doc.body.querySelector("dl");
         if (!topDL) {
-          topDL = doc.body.querySelector("h1 + dl"); // 兼容Safari
+          topDL = doc.body.querySelector("h1 + dl");
           if (!topDL) {
             const dt = doc.body.querySelector("dt");
             if (dt) {
@@ -172,20 +327,19 @@
         }
 
         if (!topDL) {
-          console.error("Error: Could not find top-level <DL> tag.");
-          return []; // 或抛出异常
+          showError("无法找到有效的书签内容");
+          return [];
         }
         return parseDL(topDL);
       }
 
       function convertBookmarks() {
-        const fileInput = document.getElementById("bookmarkFile");
         const outputArea = document.getElementById("output");
-        outputArea.textContent = ""; // 清空输出区域
+        outputArea.textContent = "";
 
         const file = fileInput.files[0];
         if (!file) {
-          alert("Please select a bookmarks HTML file.");
+          showError("请选择书签文件");
           return;
         }
 
@@ -197,11 +351,27 @@
           const doc = parser.parseFromString(htmlContent, "text/html");
 
           const result = parseBookmarks(doc);
-          outputArea.textContent = JSON.stringify(result, null, 4);
+          const jsonOutput = JSON.stringify(result, null, 4);
+          outputArea.textContent = jsonOutput;
+
+          const copyButton = document.getElementById("copyButton");
+          if (jsonOutput) {
+            outputArea.addEventListener("mouseenter", () => {
+              copyButton.style.display = "block";
+              copyButton.style.opacity = 1;
+            });
+            outputArea.addEventListener("mouseleave", () => {
+              copyButton.style.display = "none";
+              copyButton.style.opacity = 0;
+            });
+          } else {
+            copyButton.style.display = "none";
+            copyButton.style.opacity = 0;
+          }
         };
 
         reader.onerror = function () {
-          outputArea.textContent = "Error: Could not read the file.";
+          showError("文件读取失败");
         };
 
         reader.readAsText(file);
